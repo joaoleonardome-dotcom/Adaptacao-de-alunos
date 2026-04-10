@@ -183,6 +183,16 @@ tr{transition:background .12s;}
 tr:hover td{background:var(--surface3);}
 .td-ra{font-weight:800;color:var(--cyan-dark);font-size:.8rem;white-space:nowrap;font-family:'Nunito',sans-serif;font-style:normal;}
 .td-nome{font-weight:700;color:var(--text);}
+.td-nome-link{cursor:pointer;color:var(--cyan-deeper)!important;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;transition:var(--tr);}
+.td-nome-link:hover{color:var(--cyan-dark)!important;}
+.view-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px;}
+.view-field{display:flex;flex-direction:column;gap:4px;}
+.view-field.full{grid-column:1/-1;}
+.tag-chip{display:inline-flex;background:#fef3c7;color:#92400e;border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:800;letter-spacing:.02em;}
+.view-label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);}
+.view-value{font-size:.9rem;font-weight:600;color:var(--text);line-height:1.5;}
+.view-value.muted{color:var(--text-muted);font-style:italic;font-weight:400;}
+.view-text{font-size:.88rem;color:var(--text-mid);line-height:1.65;background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--border-soft);}
 .td-escola{font-size:.8rem;color:var(--text-mid);max-width:160px;}
 .td-turma{white-space:nowrap;}
 .turma-chip{display:inline-flex;background:var(--cyan-soft);color:var(--cyan-deeper);border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:800;}
@@ -379,8 +389,7 @@ mark{background:#fffb80;border-radius:2px;padding:0 1px;}
             <th onclick="sortBy('escola')">Escola Anterior <span class="sa">↕</span></th>
             <th onclick="sortBy('turma')">Turma <span class="sa">↕</span></th>
             <th onclick="sortBy('status')">Status <span class="sa">↕</span></th>
-            <th>Como está se adaptando</th>
-            <th>Obs. do Atendimento</th>
+            <th onclick="sortBy('tag')">Dificuldade <span class="sa">↕</span></th>
             <th>Apoio</th>
             <th></th>
           </tr>
@@ -440,6 +449,11 @@ mark{background:#fffb80;border-radius:2px;padding:0 1px;}
           </label>
         </div>
         <div class="field full">
+          <label>Palavra-chave da dificuldade</label>
+          <input type="text" id="fTag" placeholder="Ex: Timidez, Matemática, Bullying, Saudade…" maxlength="30">
+          <span class="hint">Uma palavra ou expressão curta que resume a dificuldade</span>
+        </div>
+        <div class="field full">
           <label>Como está se adaptando</label>
           <textarea id="fAdaptacao" placeholder="Descreva como o aluno está se adaptando à nova escola…"></textarea>
         </div>
@@ -482,6 +496,40 @@ mark{background:#fffb80;border-radius:2px;padding:0 1px;}
     </div>
   </div>
 </div>
+
+<!-- MODAL VIEW -->
+<div class="overlay" id="viewOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="vTitle">Detalhes do Aluno<small>Informações completas de adaptação</small></div>
+      <button class="close-btn" onclick="closeOverlay('viewOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="view-grid">
+        <div class="view-field"><span class="view-label">RA</span><span class="view-value" id="vRA">—</span></div>
+        <div class="view-field"><span class="view-label">Turma</span><span class="view-value" id="vTurma">—</span></div>
+        <div class="view-field full"><span class="view-label">Nome</span><span class="view-value" id="vNome">—</span></div>
+        <div class="view-field full"><span class="view-label">Escola Anterior</span><span class="view-value" id="vEscola">—</span></div>
+        <div class="view-field"><span class="view-label">Status</span><span id="vStatus">—</span></div>
+        <div class="view-field"><span class="view-label">Dificuldade</span><span class="view-value" id="vTag">—</span></div>
+        <div class="view-field"><span class="view-label">Apoio</span><span class="view-value" id="vMediado">—</span></div>
+        <div class="view-field full">
+          <span class="view-label">Como está se adaptando</span>
+          <div class="view-text" id="vAdaptacao"></div>
+        </div>
+        <div class="view-field full">
+          <span class="view-label">Obs. do Atendimento com os Pais</span>
+          <div class="view-text" id="vObs"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-flat" onclick="closeOverlay('viewOverlay')">Fechar</button>
+        <button class="btn btn-save" id="vEditBtn" onclick="">✏️ Editar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <div class="toast" id="toast"></div>
 
@@ -663,12 +711,11 @@ function renderTable() {
   tbody.innerHTML = list.map(a=>`
     <tr>
       <td class="td-ra">${hi(a.ra,q)}</td>
-      <td class="td-nome">${hi(a.nome,q)}</td>
+      <td class="td-nome td-nome-link" onclick="openView('${a.id}')">${hi(a.nome,q)}</td>
       <td class="td-escola">${hi(a.escola,q)||'<span class="td-empty">—</span>'}</td>
       <td class="td-turma"><span class="turma-chip">${hi(a.turma,q)||'—'}</span></td>
       <td>${badge(a.status)}</td>
-      <td class="td-text">${a.adaptacao?hi(a.adaptacao,q):'<span class="td-empty">Sem registro</span>'}</td>
-      <td class="td-text">${a.obs?hi(a.obs,q):'<span class="td-empty">Sem observações</span>'}</td>
+      <td>${a.tag ? `<span class="tag-chip">${esc(a.tag)}</span>` : '<span class="td-empty">—</span>'}</td>
       <td>${a.mediado ? '<span class="badge-mediado">🧑‍🤝‍🧑 Mediado</span>' : '<span class="td-empty">—</span>'}</td>
       <td class="actions-cell">
         <button class="icon-btn" title="Editar"  onclick="openEdit('${a.id}')">✏️</button>
@@ -678,12 +725,30 @@ function renderTable() {
   `).join('');
 }
 
+// ── VIEW MODAL ──
+function openView(id) {
+  const a = alunos.find(x=>x.id===id); if (!a) return;
+  document.getElementById('vTitle').innerHTML = `${esc(a.nome)}<small>${esc(a.turma)} · ${esc(a.escola||'—')}</small>`;
+  document.getElementById('vRA').textContent     = a.ra||'—';
+  document.getElementById('vTurma').textContent  = a.turma||'—';
+  document.getElementById('vNome').textContent   = a.nome||'—';
+  document.getElementById('vEscola').textContent = a.escola||'—';
+  document.getElementById('vStatus').innerHTML   = badge(a.status);
+  document.getElementById('vTag').innerHTML      = a.tag ? `<span class="tag-chip">${esc(a.tag)}</span>` : '<span class="view-value muted">Não informado</span>';
+  document.getElementById('vMediado').innerHTML  = a.mediado ? '<span class="badge-mediado">🧑‍🤝‍🧑 Mediado</span>' : '<span class="view-value muted">Não</span>';
+  document.getElementById('vAdaptacao').innerHTML = a.adaptacao ? esc(a.adaptacao) : '<span class="muted" style="font-style:italic;color:var(--text-muted)">Sem registro</span>';
+  document.getElementById('vObs').innerHTML      = a.obs ? esc(a.obs) : '<span style="font-style:italic;color:var(--text-muted)">Sem observações</span>';
+  document.getElementById('vEditBtn').onclick    = () => { closeOverlay('viewOverlay'); openEdit(id); };
+  document.getElementById('viewOverlay').classList.add('open');
+}
+
 // ── MODAL ──
 function openAdd() {
   editId=null;
   document.getElementById('mTitle').innerHTML='Novo Aluno<small>Preencha os dados do aluno novato</small>';
   ['fRA','fNome','fEscola','fTurma','fAdaptacao','fObs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fStatus').value='Sem Registro';
+  document.getElementById('fTag').value='';
   document.getElementById('fMediado').checked=false;
   document.getElementById('formOverlay').classList.add('open');
 }
@@ -699,6 +764,7 @@ function openEdit(id) {
   document.getElementById('fStatus').value=a.status;
   document.getElementById('fAdaptacao').value=a.adaptacao;
   document.getElementById('fObs').value=a.obs;
+  document.getElementById('fTag').value=a.tag||'';
   document.getElementById('fMediado').checked=!!a.mediado;
   document.getElementById('formOverlay').classList.add('open');
 }
@@ -717,6 +783,7 @@ async function saveAluno() {
     status:document.getElementById('fStatus').value,
     adaptacao:document.getElementById('fAdaptacao').value.trim(),
     obs:document.getElementById('fObs').value.trim(),
+    tag:document.getElementById('fTag').value.trim(),
     mediado:document.getElementById('fMediado').checked,
   };
   setStatus('Salvando…','sync');
@@ -877,7 +944,7 @@ function toast(msg,type='inf') {
 }
 
 // Expor funções globais necessárias para onclick no HTML
-window.openAdd=openAdd; window.openEdit=openEdit; window.closeOverlay=closeOverlay;
+window.openAdd=openAdd; window.openView=openView; window.openEdit=openEdit; window.closeOverlay=closeOverlay;
 window.saveAluno=saveAluno; window.delAluno=delAluno; window.openImport=openImport;
 window.downloadTemplate=downloadTemplate; window.handleImport=handleImport;
 window.setTab=setTab; window.setFilter=setFilter; window.sortBy=sortBy;
