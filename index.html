@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Adaptação — Alunos Novatos</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:          #f0f8f6;
+  --bg2:         #e6f4f1;
+  --surface:     #ffffff;
+  --surface2:    #f4fbf9;
+  --surface3:    #eaf7f4;
+  --cyan:        #2abfa3;
+  --cyan-dark:   #1a9e88;
+  --cyan-deeper: #127a69;
+  --cyan-soft:   #c8f0ea;
+  --cyan-pale:   #e2f8f4;
+  --text:        #1c3a35;
+  --text-mid:    #3d6b62;
+  --text-muted:  #7aada3;
+  --border:      #c8e8e2;
+  --border-soft: #ddf2ee;
+  --green-s: #0d7a5f; --green-bg: #d1fae5;
+  --yellow-s:#926a00; --yellow-bg:#fef9c3;
+  --red-s:   #b91c1c; --red-bg:   #fee2e2;
+  --grey-s:  #6b7280; --grey-bg:  #f3f4f6;
+  --radius: 14px; --radius-lg: 20px; --radius-sm: 8px;
+  --shadow-xs: 0 1px 4px rgba(42,191,163,0.08);
+  --shadow:    0 4px 18px rgba(42,191,163,0.13);
+  --shadow-lg: 0 12px 40px rgba(42,191,163,0.18);
+  --tr: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  background-image:
+    radial-gradient(circle at 8% 20%,rgba(42,191,163,.07) 0%,transparent 50%),
+    radial-gradient(circle at 92% 80%,rgba(168,230,216,.1) 0%,transparent 50%);
+}
+
+/* HEADER */
+header{
+  background:linear-gradient(135deg,var(--cyan-deeper) 0%,var(--cyan-dark) 55%,var(--cyan) 100%);
+  padding:0 36px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:72px;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 4px 24px rgba(18,122,105,.28);
+}
+.logo-wrap{
+  width:44px;height:44px;
+  background:rgba(255,255,255,.18);
+  border:1.5px solid rgba(255,255,255,.3);
+  border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.header-left{display:flex;align-items:center;gap:16px;}
+.header-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:#fff;font-weight:700;}
+.header-sub{font-size:.72rem;color:rgba(255,255,255,.72);font-weight:400;margin-top:1px;letter-spacing:.03em;}
+.header-actions{display:flex;gap:10px;align-items:center;}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:10px;
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;
+  cursor:pointer;border:none;transition:var(--tr);white-space:nowrap;
+}
+.btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.28);}
+.btn-ghost:hover{background:rgba(255,255,255,.26);transform:translateY(-1px);}
+.btn-cta{background:#fff;color:var(--cyan-deeper);box-shadow:0 2px 10px rgba(0,0,0,.12);}
+.btn-cta:hover{background:var(--cyan-pale);transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.16);}
+.btn-save{background:linear-gradient(135deg,var(--cyan-dark),var(--cyan));color:#fff;box-shadow:0 4px 14px rgba(42,191,163,.35);}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(42,191,163,.45);}
+.btn-flat{background:var(--surface3);color:var(--text-mid);border:1.5px solid var(--border);}
+.btn-flat:hover{background:var(--border);}
+
+/* MAIN */
+main{padding:32px 36px;max-width:1440px;margin:0 auto;}
+
+/* STATS */
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{
+  background:var(--surface);border-radius:var(--radius);
+  padding:20px 22px;box-shadow:var(--shadow-xs);
+  border:1.5px solid var(--border-soft);
+  position:relative;overflow:hidden;transition:var(--tr);cursor:default;
+  animation:fadeUp .4s ease both;
+}
+.stat-card:nth-child(1){animation-delay:.04s;}
+.stat-card:nth-child(2){animation-delay:.08s;}
+.stat-card:nth-child(3){animation-delay:.12s;}
+.stat-card:nth-child(4){animation-delay:.16s;}
+.stat-card:nth-child(5){animation-delay:.20s;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px;}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.stat-card.c1::before{background:var(--cyan);}
+.stat-card.c2::before{background:var(--green-s);}
+.stat-card.c3::before{background:var(--yellow-s);}
+.stat-card.c4::before{background:var(--red-s);}
+.stat-card.c5::before{background:var(--grey-s);}
+.stat-icon{font-size:1.6rem;margin-bottom:8px;display:block;}
+.stat-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:4px;}
+.stat-value{font-size:2.2rem;font-weight:700;line-height:1;font-family:'Playfair Display',serif;}
+.stat-card.c1 .stat-value{color:var(--cyan-dark);}
+.stat-card.c2 .stat-value{color:var(--green-s);}
+.stat-card.c3 .stat-value{color:var(--yellow-s);}
+.stat-card.c4 .stat-value{color:var(--red-s);}
+.stat-card.c5 .stat-value{color:var(--grey-s);}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+.search-wrap{position:relative;flex:1;min-width:240px;}
+.s-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--cyan);font-size:15px;pointer-events:none;}
+#searchInput{
+  width:100%;padding:11px 16px 11px 44px;
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:500;
+  background:var(--surface);color:var(--text);transition:var(--tr);
+}
+#searchInput::placeholder{color:var(--text-muted);}
+#searchInput:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft);}
+
+.filter-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.pill{
+  padding:7px 15px;border-radius:30px;font-size:.77rem;font-weight:700;
+  cursor:pointer;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--text-muted);transition:var(--tr);
+}
+.pill:hover{border-color:var(--cyan);color:var(--cyan-dark);}
+.pill.active{background:var(--cyan);border-color:var(--cyan);color:#fff;box-shadow:0 3px 10px rgba(42,191,163,.3);}
+
+/* PANEL */
+.panel{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1.5px solid var(--border-soft);overflow:hidden;}
+
+/* TABS */
+.tabs-header{
+  display:flex;overflow-x:auto;background:var(--surface2);
+  border-bottom:1.5px solid var(--border);padding:0 6px;gap:2px;
+  scrollbar-width:none;
+}
+.tabs-header::-webkit-scrollbar{display:none;}
+.tab-btn{
+  padding:15px 20px;font-family:'Nunito',sans-serif;font-size:.83rem;font-weight:700;
+  cursor:pointer;border:none;background:transparent;color:var(--text-muted);
+  white-space:nowrap;position:relative;transition:var(--tr);border-radius:10px 10px 0 0;
+}
+.tab-btn:hover{color:var(--cyan-dark);background:var(--cyan-pale);}
+.tab-btn.active{color:var(--cyan-deeper);background:var(--surface);box-shadow:0 -2px 0 var(--cyan) inset;}
+.tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--cyan-soft);color:var(--cyan-dark);
+  border-radius:20px;font-size:.68rem;font-weight:800;
+  padding:1px 8px;margin-left:6px;min-width:22px;
+}
+.tab-btn.active .tab-badge{background:var(--cyan);color:#fff;}
+
+/* TABLE */
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.855rem;}
+thead tr{background:var(--surface2);}
+th{
+  padding:13px 16px;text-align:left;font-size:.7rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);
+  border-bottom:1.5px solid var(--border);cursor:pointer;user-select:none;
+  white-space:nowrap;transition:color .15s;
+}
+th:hover{color:var(--cyan-dark);}
+th.sorted{color:var(--cyan);}
+.sa{margin-left:4px;opacity:.5;font-size:.65rem;}
+th.sorted .sa{opacity:1;}
+td{padding:14px 16px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr{transition:background .12s;}
+tr:hover td{background:var(--surface3);}
+.td-ra{font-weight:800;color:var(--cyan-dark);font-size:.8rem;white-space:nowrap;font-family:'Nunito',sans-serif;font-style:normal;}
+.td-nome{font-weight:700;color:var(--text);}
+.td-escola{font-size:.8rem;color:var(--text-mid);max-width:160px;}
+.td-turma{white-space:nowrap;}
+.turma-chip{display:inline-flex;background:var(--cyan-soft);color:var(--cyan-deeper);border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:800;}
+.td-text{font-size:.82rem;color:var(--text-mid);line-height:1.55;max-width:220px;min-width:140px;}
+.td-empty{color:var(--text-muted);font-style:italic;font-size:.78rem;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:800;white-space:nowrap;}
+.b-bem  {background:var(--green-bg); color:var(--green-s);}
+.b-adapt{background:var(--yellow-bg);color:var(--yellow-s);}
+.b-dif  {background:var(--red-bg);   color:var(--red-s);}
+.b-sem  {background:var(--grey-bg);  color:var(--grey-s);}
+.actions-cell{white-space:nowrap;text-align:right;}
+.icon-btn{
+  width:33px;height:33px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;
+  justify-content:center;font-size:13px;transition:var(--tr);margin-left:5px;color:var(--text-muted);
+}
+.icon-btn:hover{border-color:var(--cyan);color:var(--cyan-dark);background:var(--cyan-pale);}
+.icon-btn.del:hover{border-color:var(--red-s);color:var(--red-s);background:var(--red-bg);}
+.empty-state{padding:64px 32px;text-align:center;color:var(--text-muted);}
+.empty-state .ei{font-size:3.5rem;margin-bottom:14px;opacity:.6;}
+.empty-state p{font-size:.9rem;}
+
+/* MODAL */
+.overlay{
+  position:fixed;inset:0;background:rgba(18,62,55,.38);
+  backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;opacity:0;pointer-events:none;transition:opacity .22s;padding:20px;
+}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--surface);border-radius:var(--radius-lg);
+  width:100%;max-width:640px;max-height:92vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);border:1.5px solid var(--border);
+  transform:translateY(20px) scale(.98);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.overlay.open .modal{transform:translateY(0) scale(1);}
+.modal-head{padding:26px 30px 0;display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--cyan-deeper);font-weight:700;line-height:1.2;}
+.modal-title small{display:block;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:500;color:var(--text-muted);margin-top:3px;}
+.modal-body{padding:0 30px 30px;}
+.close-btn{
+  width:34px;height:34px;border-radius:9px;border:1.5px solid var(--border);
+  background:var(--surface2);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:14px;color:var(--text-muted);transition:var(--tr);flex-shrink:0;
+}
+.close-btn:hover{border-color:var(--red-s);color:var(--red-s);background:var(--red-bg);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.full{grid-column:1/-1;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;}
+.field input,.field select,.field textarea{
+  padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text);
+  background:var(--bg2);transition:var(--tr);font-weight:500;
+}
+.field input::placeholder,.field textarea::placeholder{color:var(--text-muted);}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft);background:#fff;
+}
+.field textarea{min-height:88px;resize:vertical;line-height:1.55;}
+.field .hint{font-size:.7rem;color:var(--text-muted);margin-top:-2px;font-weight:500;}
+.sec-div{
+  font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--cyan);margin:4px 0 2px;display:flex;align-items:center;gap:10px;
+}
+.sec-div::after{content:'';flex:1;height:1px;background:var(--border);}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding-top:22px;border-top:1.5px solid var(--border-soft);margin-top:6px;}
+
+/* IMPORT */
+.drop-zone{
+  border:2px dashed var(--border);border-radius:var(--radius);
+  padding:36px 24px;text-align:center;cursor:pointer;
+  transition:var(--tr);color:var(--text-muted);background:var(--surface2);margin-bottom:16px;
+}
+.drop-zone:hover,.drop-zone.over{border-color:var(--cyan);background:var(--cyan-pale);color:var(--cyan-dark);}
+.drop-zone .dz-icon{font-size:2.8rem;margin-bottom:10px;display:block;}
+.drop-zone p{font-size:.88rem;font-weight:600;}
+.drop-zone .dz-sub{font-size:.74rem;margin-top:5px;opacity:.75;font-weight:400;}
+#fileInput{display:none;}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:26px;right:26px;
+  padding:13px 22px;border-radius:12px;
+  font-size:.84rem;font-weight:700;z-index:9999;
+  opacity:0;transform:translateY(10px);transition:all .25s;
+  pointer-events:none;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:9px;max-width:360px;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok {background:var(--cyan);color:#fff;}
+.toast.err{background:var(--red-s);color:#fff;}
+.toast.inf{background:var(--text);color:#fff;}
+
+.mediado-wrap{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg2);cursor:pointer;font-size:.88rem;font-weight:600;color:var(--text);
+  transition:var(--tr);user-select:none;
+}
+.mediado-wrap:has(input:checked){border-color:var(--cyan);background:var(--cyan-pale);color:var(--cyan-deeper);}
+.mediado-wrap input[type=checkbox]{width:16px;height:16px;accent-color:var(--cyan);cursor:pointer;flex-shrink:0;}
+.mediado-label{font-size:.88rem;font-weight:700;}
+.badge-mediado{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:800;white-space:nowrap;background:#ede9fe;color:#5b21b6;}
+mark{background:#fffb80;border-radius:2px;padding:0 1px;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#a8e6d8;border-radius:10px;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:900px){
+  main{padding:20px 16px;}
+  header{padding:0 16px;}
+  .stats-bar{grid-template-columns:repeat(2,1fr);}
+  .stat-card:first-child{grid-column:1/-1;}
+  .form-grid{grid-template-columns:1fr;}
+  .toolbar{flex-direction:column;align-items:stretch;}
+  .header-title{font-size:1.05rem;}
+}
+
+/* SYNC STATUS */
+.sync-status {
+  font-size:.72rem;font-weight:700;padding:5px 12px;
+  border-radius:20px;display:inline-flex;align-items:center;gap:6px;
+  transition:var(--tr);letter-spacing:.02em;
+}
+.sync-status.ok  { background:rgba(255,255,255,.15);color:#d1fae5; }
+.sync-status.sync{ background:rgba(255,255,255,.12);color:rgba(255,255,255,.8); }
+.sync-status.err { background:rgba(185,28,28,.35);color:#fecaca; }
+.sync-status.off { background:rgba(255,200,0,.2);color:#fef9c3; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-wrap">🎓</div>
+    <div>
+      <div class="header-title">Painel de Adaptação</div>
+      <div class="header-sub">Acompanhamento de alunos novatos · Ano Letivo 2025</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span class="sync-status sync" id="syncStatus">🔄 Conectando…</span>
+    <button class="btn btn-ghost" onclick="downloadTemplate()">⬇ Modelo</button>
+    <button class="btn btn-ghost" onclick="openImport()">📂 Importar</button>
+    <button class="btn btn-cta"   onclick="openAdd()">＋ Novo Aluno</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats-bar">
+    <div class="stat-card c1"><span class="stat-icon">👥</span><div class="stat-label">Total de Alunos</div><div class="stat-value" id="s-total">0</div></div>
+    <div class="stat-card c2"><span class="stat-icon">✅</span><div class="stat-label">Bem Adaptados</div><div class="stat-value" id="s-bem">0</div></div>
+    <div class="stat-card c3"><span class="stat-icon">⏳</span><div class="stat-label">Em Adaptação</div><div class="stat-value" id="s-adapt">0</div></div>
+    <div class="stat-card c4"><span class="stat-icon">⚠️</span><div class="stat-label">Com Dificuldade</div><div class="stat-value" id="s-dif">0</div></div>
+    <div class="stat-card c5"><span class="stat-icon">○</span><div class="stat-label">Sem Registro</div><div class="stat-value" id="s-sem">0</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="s-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar por nome, RA, turma ou escola anterior…" oninput="renderAll()">
+    </div>
+    <div class="filter-pills">
+      <button class="pill active" data-s="todos"          onclick="setFilter(this)">Todos</button>
+      <button class="pill"        data-s="Bem Adaptado"   onclick="setFilter(this)">✅ Bem Adaptado</button>
+      <button class="pill"        data-s="Em Adaptação"   onclick="setFilter(this)">⏳ Em Adaptação</button>
+      <button class="pill"        data-s="Com Dificuldade"onclick="setFilter(this)">⚠️ Dificuldade</button>
+      <button class="pill"        data-s="Sem Registro"   onclick="setFilter(this)">○ Sem Registro</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs-header">
+      <button class="tab-btn active" data-t="todos" onclick="setTab(this)">Todos   <span class="tab-badge" id="b-todos">0</span></button>
+      <button class="tab-btn"        data-t="6"     onclick="setTab(this)">6º Ano  <span class="tab-badge" id="b-6">0</span></button>
+      <button class="tab-btn"        data-t="7"     onclick="setTab(this)">7º Ano  <span class="tab-badge" id="b-7">0</span></button>
+      <button class="tab-btn"        data-t="8"     onclick="setTab(this)">8º Ano  <span class="tab-badge" id="b-8">0</span></button>
+      <button class="tab-btn"        data-t="9"     onclick="setTab(this)">9º Ano  <span class="tab-badge" id="b-9">0</span></button>
+      <button class="tab-btn"        data-t="1em"   onclick="setTab(this)">1º EM   <span class="tab-badge" id="b-1em">0</span></button>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('ra')">RA <span class="sa">↕</span></th>
+            <th onclick="sortBy('nome')">Aluno <span class="sa">↕</span></th>
+            <th onclick="sortBy('escola')">Escola Anterior <span class="sa">↕</span></th>
+            <th onclick="sortBy('turma')">Turma <span class="sa">↕</span></th>
+            <th onclick="sortBy('status')">Status <span class="sa">↕</span></th>
+            <th>Como está se adaptando</th>
+            <th>Obs. do Atendimento</th>
+            <th>Apoio</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none">
+        <div class="ei">🔎</div>
+        <p>Nenhum aluno encontrado para os filtros selecionados.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL FORM -->
+<div class="overlay" id="formOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="mTitle">Novo Aluno<small>Preencha os dados do aluno novato</small></div>
+      <button class="close-btn" onclick="closeOverlay('formOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="sec-div full">Identificação</div>
+        <div class="field">
+          <label>RA — Registro Acadêmico</label>
+          <input type="text" id="fRA" placeholder="Ex: 2024001">
+        </div>
+        <div class="field">
+          <label>Turma</label>
+          <input type="text" id="fTurma" placeholder="Ex: 6ºA, 7ºB, 1ºEM-A">
+          <span class="hint">Digite a série e turma livremente</span>
+        </div>
+        <div class="field full">
+          <label>Nome completo do aluno</label>
+          <input type="text" id="fNome" placeholder="Nome completo">
+        </div>
+        <div class="field full">
+          <label>Escola anterior</label>
+          <input type="text" id="fEscola" placeholder="Nome da escola de origem">
+        </div>
+        <div class="sec-div full">Acompanhamento</div>
+        <div class="field">
+          <label>Status de adaptação</label>
+          <select id="fStatus">
+            <option value="Sem Registro">○ Sem Registro</option>
+            <option value="Bem Adaptado">✅ Bem Adaptado</option>
+            <option value="Em Adaptação">⏳ Em Adaptação</option>
+            <option value="Com Dificuldade">⚠️ Com Dificuldade</option>
+          </select>
+        </div>
+        <div class="field" style="justify-content:flex-end;padding-bottom:4px;">
+          <label>Apoio</label>
+          <label class="mediado-wrap">
+            <input type="checkbox" id="fMediado">
+            <span class="mediado-label">🧑‍🤝‍🧑 Mediado</span>
+          </label>
+        </div>
+        <div class="field full">
+          <label>Como está se adaptando</label>
+          <textarea id="fAdaptacao" placeholder="Descreva como o aluno está se adaptando à nova escola…"></textarea>
+        </div>
+        <div class="field full">
+          <label>Observações do atendimento com os pais</label>
+          <textarea id="fObs" placeholder="Resumo da conversa com os responsáveis…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-flat" onclick="closeOverlay('formOverlay')">Cancelar</button>
+        <button class="btn btn-save" onclick="saveAluno()">💾 Salvar Aluno</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="overlay" id="importOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Importar Planilha<small>Carregue um arquivo .xlsx ou .csv</small></div>
+      <button class="close-btn" onclick="closeOverlay('importOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <span class="dz-icon">📊</span>
+        <p><strong>Clique aqui</strong> ou arraste um arquivo</p>
+        <p class="dz-sub">Formatos aceitos: .xlsx · .csv — Os dados serão mesclados com os existentes</p>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.csv" onchange="handleImport(event)">
+      <p style="font-size:.78rem;color:var(--text-muted);line-height:1.7">
+        ⚠️ A planilha deve ter as colunas:<br>
+        <strong>RA · Nome · Escola Anterior · Turma · Status · Adaptação · Observações</strong><br>
+        Baixe o modelo abaixo para garantir o formato correto.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-flat" onclick="closeOverlay('importOverlay')">Fechar</button>
+        <button class="btn btn-save" onclick="downloadTemplate()">⬇ Baixar Modelo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ══════════════════════════════════════════════════════
+//  🔧 COLE AQUI SUAS CREDENCIAIS DO FIREBASE
+//  (Instruções no bloco de configuração abaixo)
+// ══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyAL5MWCJJS8AcHJdehZMY5MXk-RtKscTSo",
+  authDomain:        "adpatacao-de-alunos.firebaseapp.com",
+  projectId:         "adpatacao-de-alunos",
+  storageBucket:     "adpatacao-de-alunos.firebasestorage.app",
+  messagingSenderId: "777541500370",
+  appId:             "1:777541500370:web:59b11a06f8d76f113a5c0b"
+};
+// ══════════════════════════════════════════════════════
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const COL = 'alunos_adaptacao';
+
+let alunos = [];
+let editId = null, curTab = 'todos', curFilter = 'todos';
+let sortField = 'nome', sortAsc = true;
+let dbReady = false;
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+// ── STATUS UI ──
+function setStatus(msg, type='sync') {
+  const el = document.getElementById('syncStatus');
+  const icons = { sync:'🔄', ok:'🟢', err:'🔴', off:'🟡' };
+  el.innerHTML = `${icons[type]||''} ${msg}`;
+  el.className = `sync-status ${type}`;
+}
+
+// ── FIREBASE: escuta em tempo real ──
+onSnapshot(collection(db, COL), (snapshot) => {
+  alunos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  dbReady = true;
+  setStatus('Sincronizado', 'ok');
+
+  // Seed inicial se banco vazio
+  if (alunos.length === 0) seedData();
+  else renderAll();
+}, (err) => {
+  console.error(err);
+  setStatus('Erro de conexão — verifique as credenciais', 'err');
+  // Fallback para localStorage
+  alunos = JSON.parse(localStorage.getItem('adap_v3') || '[]');
+  renderAll();
+});
+
+// ── SALVAR / DELETAR ──
+async function saveToDb(obj) {
+  const { id, ...data } = obj;
+  await setDoc(doc(db, COL, id), data);
+  localStorage.setItem('adap_v3', JSON.stringify(alunos)); // backup local
+}
+
+async function deleteFromDb(id) {
+  await deleteDoc(doc(db, COL, id));
+  localStorage.setItem('adap_v3', JSON.stringify(alunos));
+}
+
+// ── SEED ──
+async function seedData() {
+  const seed = [
+    {id:uid(),ra:'2024001',nome:'Ana Carolina Souza',   escola:'E.E. Prof. João Silva',  turma:'6ºA',   status:'Bem Adaptado',   adaptacao:'Aluna muito sociável, já fez amizades. Participa ativamente das aulas.',obs:'Mãe relatou que a filha chegou animada. Sem preocupações.',mediado:false},
+    {id:uid(),ra:'2024002',nome:'Bruno Ferreira Lima',  escola:'EMEF Dom Pedro II',       turma:'7ºB',   status:'Em Adaptação',   adaptacao:'Ainda tímido, mas mostrando evolução gradual.',obs:'Pai relatou saudade dos colegas antigos. Monitorar por 30 dias.',mediado:false},
+    {id:uid(),ra:'2024003',nome:'Carla Mendes Pinto',   escola:'Col. Estadual Central',   turma:'8ºA',   status:'Com Dificuldade',adaptacao:'Dificuldade em acompanhar o ritmo de Matemática e Ciências.',obs:'Mãe preocupada com as notas. Orientada sobre reforço.',mediado:true},
+    {id:uid(),ra:'2024004',nome:'Diego Alves Rocha',    escola:'E.M. Santos Dumont',      turma:'6ºB',   status:'Bem Adaptado',   adaptacao:'Excelente adaptação. Já é referência positiva entre os colegas.',obs:'Responsável satisfeito. Elogiou professores e infraestrutura.',mediado:false},
+    {id:uid(),ra:'2024005',nome:'Eduarda Martins Costa',escola:'Col. São Francisco',      turma:'9ºA',   status:'Sem Registro',   adaptacao:'',obs:'',mediado:false},
+    {id:uid(),ra:'2024006',nome:'Felipe Santos Gomes',  escola:'EMEF Prof. Artur Costa',  turma:'1ºEM-A',status:'Em Adaptação',   adaptacao:'Adaptação ao EM gradual. Organização dos estudos em progresso.',obs:'Pais atentos. Solicitaram orientação sobre novo currículo.',mediado:false},
+    {id:uid(),ra:'2024007',nome:'Gabriela Oliveira Nunes',escola:'E.E. José Alencar',    turma:'7ºA',   status:'Bem Adaptado',   adaptacao:'Integrada ao grupo. Destaque em Português e Arte.',obs:'Mãe relatou que a filha já trouxe colegas para estudar em casa.',mediado:false},
+    {id:uid(),ra:'2024008',nome:'Henrique Castro Vieira',escola:'EMEF Rui Barbosa',       turma:'1ºEM-B',status:'Com Dificuldade',adaptacao:'Dificuldade com maior carga horária e exigência acadêmica.',obs:'Pai pediu orientação sobre reforço. Encaminhado ao apoio pedagógico.',mediado:true},
+  ];
+  const batch = writeBatch(db);
+  seed.forEach(a => { const {id,...data} = a; batch.set(doc(db, COL, id), data); });
+  await batch.commit();
+}
+
+// ── HELPERS ──
+function getTabKey(t) {
+  const s = (t||'').toLowerCase();
+  if (s.startsWith('6')) return '6';
+  if (s.startsWith('7')) return '7';
+  if (s.startsWith('8')) return '8';
+  if (s.startsWith('9')) return '9';
+  if (s.startsWith('1') && (s.includes('em')||s.includes('médio')||s.includes('medio'))) return '1em';
+  return 'outro';
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  return alunos.filter(a => {
+    const tabOk  = curTab==='todos' || getTabKey(a.turma)===curTab;
+    const filtOk = curFilter==='todos' || a.status===curFilter;
+    const qOk    = !q || [a.ra,a.nome,a.escola,a.turma,a.adaptacao,a.obs].some(v=>(v||'').toLowerCase().includes(q));
+    return tabOk && filtOk && qOk;
+  }).sort((a,b) => {
+    const va=(a[sortField]||'').toLowerCase(), vb=(b[sortField]||'').toLowerCase();
+    return sortAsc ? va.localeCompare(vb,'pt-BR') : vb.localeCompare(va,'pt-BR');
+  });
+}
+
+function setTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); curTab = btn.dataset.t; renderAll();
+}
+function setFilter(btn) {
+  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); curFilter = btn.dataset.s; renderAll();
+}
+function sortBy(f) {
+  sortAsc = sortField===f ? !sortAsc : true; sortField = f; renderAll();
+}
+
+// ── RENDER ──
+function renderAll() { updateStats(); updateBadges(); renderTable(); }
+
+function countTab(t) {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  return alunos.filter(a => {
+    const tOk = t==='todos' || getTabKey(a.turma)===t;
+    const fOk = curFilter==='todos' || a.status===curFilter;
+    const qOk = !q || [a.ra,a.nome,a.escola,a.turma,a.adaptacao,a.obs].some(v=>(v||'').toLowerCase().includes(q));
+    return tOk && fOk && qOk;
+  }).length;
+}
+
+function updateBadges() {
+  ['todos','6','7','8','9','1em'].forEach(k => {
+    const el = document.getElementById('b-'+k);
+    if (el) el.textContent = countTab(k);
+  });
+}
+
+function updateStats() {
+  const c = s => alunos.filter(a=>a.status===s).length;
+  document.getElementById('s-total').textContent = alunos.length;
+  document.getElementById('s-bem').textContent   = c('Bem Adaptado');
+  document.getElementById('s-adapt').textContent = c('Em Adaptação');
+  document.getElementById('s-dif').textContent   = c('Com Dificuldade');
+  document.getElementById('s-sem').textContent   = c('Sem Registro');
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function hi(text, q) {
+  if (!q||!text) return esc(text);
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
+  return esc(text).replace(re,'<mark>$1</mark>');
+}
+
+function badge(s) {
+  const m = {
+    'Bem Adaptado':   ['b-bem',  '✅'],
+    'Em Adaptação':   ['b-adapt','⏳'],
+    'Com Dificuldade':['b-dif',  '⚠️'],
+    'Sem Registro':   ['b-sem',  '○'],
+  };
+  const [cls,icon] = m[s]||['b-sem','○'];
+  return `<span class="badge ${cls}">${icon} ${esc(s)}</span>`;
+}
+
+function renderTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const list = getFiltered();
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('emptyState');
+  if (!list.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  tbody.innerHTML = list.map(a=>`
+    <tr>
+      <td class="td-ra">${hi(a.ra,q)}</td>
+      <td class="td-nome">${hi(a.nome,q)}</td>
+      <td class="td-escola">${hi(a.escola,q)||'<span class="td-empty">—</span>'}</td>
+      <td class="td-turma"><span class="turma-chip">${hi(a.turma,q)||'—'}</span></td>
+      <td>${badge(a.status)}</td>
+      <td class="td-text">${a.adaptacao?hi(a.adaptacao,q):'<span class="td-empty">Sem registro</span>'}</td>
+      <td class="td-text">${a.obs?hi(a.obs,q):'<span class="td-empty">Sem observações</span>'}</td>
+      <td>${a.mediado ? '<span class="badge-mediado">🧑‍🤝‍🧑 Mediado</span>' : '<span class="td-empty">—</span>'}</td>
+      <td class="actions-cell">
+        <button class="icon-btn" title="Editar"  onclick="openEdit('${a.id}')">✏️</button>
+        <button class="icon-btn del" title="Excluir" onclick="delAluno('${a.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── MODAL ──
+function openAdd() {
+  editId=null;
+  document.getElementById('mTitle').innerHTML='Novo Aluno<small>Preencha os dados do aluno novato</small>';
+  ['fRA','fNome','fEscola','fTurma','fAdaptacao','fObs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fStatus').value='Sem Registro';
+  document.getElementById('fMediado').checked=false;
+  document.getElementById('formOverlay').classList.add('open');
+}
+
+function openEdit(id) {
+  const a = alunos.find(x=>x.id===id); if (!a) return;
+  editId=id;
+  document.getElementById('mTitle').innerHTML='Editar Aluno<small>Atualize as informações do aluno</small>';
+  document.getElementById('fRA').value=a.ra;
+  document.getElementById('fNome').value=a.nome;
+  document.getElementById('fEscola').value=a.escola;
+  document.getElementById('fTurma').value=a.turma;
+  document.getElementById('fStatus').value=a.status;
+  document.getElementById('fAdaptacao').value=a.adaptacao;
+  document.getElementById('fObs').value=a.obs;
+  document.getElementById('fMediado').checked=!!a.mediado;
+  document.getElementById('formOverlay').classList.add('open');
+}
+
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+async function saveAluno() {
+  const ra=document.getElementById('fRA').value.trim();
+  const nome=document.getElementById('fNome').value.trim();
+  const turma=document.getElementById('fTurma').value.trim();
+  if (!ra||!nome||!turma) { toast('Preencha RA, Nome e Turma.','err'); return; }
+  const obj={
+    ra,nome,
+    escola:document.getElementById('fEscola').value.trim(),
+    turma,
+    status:document.getElementById('fStatus').value,
+    adaptacao:document.getElementById('fAdaptacao').value.trim(),
+    obs:document.getElementById('fObs').value.trim(),
+    mediado:document.getElementById('fMediado').checked,
+  };
+  setStatus('Salvando…','sync');
+  try {
+    if (editId) {
+      const i=alunos.findIndex(a=>a.id===editId);
+      if (i>-1) { alunos[i]={...alunos[i],...obj}; await saveToDb(alunos[i]); }
+      toast('Aluno atualizado com sucesso!','ok');
+    } else {
+      const novo={id:uid(),...obj};
+      alunos.push(novo);
+      await saveToDb(novo);
+      toast('Aluno adicionado com sucesso!','ok');
+    }
+    setStatus('Sincronizado','ok');
+  } catch(e) {
+    toast('Erro ao salvar. Verifique a conexão.','err');
+    setStatus('Erro ao salvar','err');
+  }
+  closeOverlay('formOverlay'); renderAll();
+}
+
+async function delAluno(id) {
+  if (!confirm('Deseja excluir este aluno permanentemente?')) return;
+  setStatus('Excluindo…','sync');
+  try {
+    alunos=alunos.filter(a=>a.id!==id);
+    await deleteFromDb(id);
+    setStatus('Sincronizado','ok');
+  } catch(e) {
+    setStatus('Erro ao excluir','err');
+  }
+  renderAll(); toast('Aluno excluído.','inf');
+}
+
+// ── IMPORT ──
+function openImport() { document.getElementById('importOverlay').classList.add('open'); }
+
+function handleImport(e) {
+  const file=e.target.files[0]; if (!file) return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if (ext==='csv') {
+    const r=new FileReader();
+    r.onload=ev=>importCSV(ev.target.result);
+    r.readAsText(file,'UTF-8');
+  } else {
+    const r=new FileReader();
+    r.onload=ev=>{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      processRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}));
+    };
+    r.readAsArrayBuffer(file);
+  }
+  e.target.value='';
+}
+
+function importCSV(text) {
+  const lines=text.split('\n').filter(l=>l.trim());
+  const heads=lines[0].split(',').map(h=>h.trim().toLowerCase());
+  processRows(lines.slice(1).map(line=>{
+    const vals=line.split(','), obj={};
+    heads.forEach((h,i)=>obj[h]=(vals[i]||'').trim().replace(/^"|"$/g,''));
+    return obj;
+  }));
+}
+
+function colVal(row,keys) {
+  const rk=Object.keys(row).map(k=>k.toLowerCase());
+  for (const k of keys) {
+    const m=rk.find(r=>r.includes(k));
+    if (m) { const orig=Object.keys(row).find(r=>r.toLowerCase()===m); return orig?String(row[orig]||'').trim():''; }
+  }
+  return '';
+}
+
+async function processRows(rows) {
+  let added=0, updated=0;
+  const batch = writeBatch(db);
+  rows.forEach(row=>{
+    const ra  =colVal(row,['ra','registro']);
+    const nome=colVal(row,['nome','aluno']);
+    if (!ra&&!nome) return;
+    const obj={
+      ra:ra||'—', nome:nome||'—',
+      escola:   colVal(row,['escola']),
+      turma:    colVal(row,['turma','série','serie','ano']),
+      status:   colVal(row,['status','situação','situacao'])||'Sem Registro',
+      adaptacao:colVal(row,['adaptacao','adaptação','como']),
+      obs:      colVal(row,['obs','observ','atendimento']),
+      mediado:  false,
+    };
+    const idx=alunos.findIndex(a=>a.ra===ra&&ra!=='—');
+    if (idx>-1) { alunos[idx]={...alunos[idx],...obj}; batch.set(doc(db,COL,alunos[idx].id),obj); updated++; }
+    else        { const id=uid(); alunos.push({id,...obj}); batch.set(doc(db,COL,id),obj); added++; }
+  });
+  try {
+    await batch.commit();
+    setStatus('Sincronizado','ok');
+  } catch(e) { setStatus('Erro na importação','err'); }
+  closeOverlay('importOverlay'); renderAll();
+  toast(`Importação concluída: ${added} novos, ${updated} atualizados.`,'ok');
+}
+
+// ── TEMPLATE ──
+function downloadTemplate() {
+  const wb=XLSX.utils.book_new();
+  const headers=['RA','Nome','Escola Anterior','Turma','Status','Adaptação','Observações'];
+  const examples=[
+    ['2024001','Maria da Silva','E.E. Prof. Fulano de Tal','6ºA','Bem Adaptado','Aluna sociável, bem adaptada ao grupo.','Mãe relatou satisfação.'],
+    ['2024002','João Pereira','Colégio São José','7ºB','Em Adaptação','Em processo de adaptação.','Pai acompanha. Retornar em 30 dias.'],
+    ['2024003','Luísa Costa','EMEF Dom Pedro II','8ºA','Com Dificuldade','Dificuldade nas exatas.','Orientada sobre reforço escolar.'],
+    ['2024004','Pedro Alves','E.M. Santos Dumont','9ºA','Sem Registro','',''],
+    ['2024005','Clara Rocha','Escola ABC','1ºEM-A','Bem Adaptado','Ótima transição para o EM.','Família participativa.'],
+  ];
+  const ws=XLSX.utils.aoa_to_sheet([headers,...examples]);
+  ws['!cols']=[10,28,30,14,18,38,42].map(w=>({wch:w}));
+  const guide=[
+    ['GUIA DE PREENCHIMENTO — Painel de Adaptação'],[''],
+    ['Campo','Descrição','Exemplos de valores'],
+    ['RA','Registro Acadêmico do aluno','2024001'],
+    ['Nome','Nome completo do aluno','Maria da Silva'],
+    ['Escola Anterior','Escola de origem','E.E. Prof. João, EMEF Dom Pedro II'],
+    ['Turma','Série e turma (campo livre)','6ºA, 7ºB, 8ºA, 9ºB, 1ºEM-A, 1ºEM-B'],
+    ['Status','Situação de adaptação','Bem Adaptado | Em Adaptação | Com Dificuldade | Sem Registro'],
+    ['Adaptação','Como está se adaptando','Texto livre'],
+    ['Observações','Resumo do atendimento com os pais','Texto livre'],
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(guide);
+  ws2['!cols']=[22,40,52].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,'Alunos');
+  XLSX.utils.book_append_sheet(wb,ws2,'Guia');
+  XLSX.writeFile(wb,'modelo_adaptacao_alunos.xlsx');
+  toast('Modelo baixado com sucesso!','ok');
+}
+
+// ── DRAG DROP ──
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('over');
+  const file=e.dataTransfer.files[0];
+  if (file) handleImport({target:{files:[file],value:''}});
+});
+
+// ── CLOSE ON BG ──
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+// ── TOAST ──
+function toast(msg,type='inf') {
+  const t=document.getElementById('toast');
+  const icons={ok:'✅',err:'❌',inf:'ℹ️'};
+  t.innerHTML=`${icons[type]||''} ${msg}`;
+  t.className=`toast show ${type}`;
+  setTimeout(()=>t.className='toast',3200);
+}
+
+// Expor funções globais necessárias para onclick no HTML
+window.openAdd=openAdd; window.openEdit=openEdit; window.closeOverlay=closeOverlay;
+window.saveAluno=saveAluno; window.delAluno=delAluno; window.openImport=openImport;
+window.downloadTemplate=downloadTemplate; window.handleImport=handleImport;
+window.setTab=setTab; window.setFilter=setFilter; window.sortBy=sortBy;
+
+setStatus('Conectando ao Firebase…','sync');
+</script>
+</body>
+</html>
