@@ -372,8 +372,10 @@ mark{background:#fffb80;border-radius:2px;padding:0 1px;}
 
   <div class="panel">
     <div class="tabs-header">
-      <button class="tab-btn active" data-t="todos" onclick="setTab(this)">Todos   <span class="tab-badge" id="b-todos">0</span></button>
-      <button class="tab-btn"        data-t="6"     onclick="setTab(this)">6º Ano  <span class="tab-badge" id="b-6">0</span></button>
+      <button class="tab-btn active" data-t="todos"    onclick="setTab(this)">Todos      <span class="tab-badge" id="b-todos">0</span></button>
+      <button class="tab-btn"        data-t="infantil" onclick="setTab(this)">Infantil   <span class="tab-badge" id="b-infantil">0</span></button>
+      <button class="tab-btn"        data-t="fund1"    onclick="setTab(this)">Fund. I    <span class="tab-badge" id="b-fund1">0</span></button>
+      <button class="tab-btn"        data-t="6"        onclick="setTab(this)">6º Ano     <span class="tab-badge" id="b-6">0</span></button>
       <button class="tab-btn"        data-t="7"     onclick="setTab(this)">7º Ano  <span class="tab-badge" id="b-7">0</span></button>
       <button class="tab-btn"        data-t="8"     onclick="setTab(this)">8º Ano  <span class="tab-badge" id="b-8">0</span></button>
       <button class="tab-btn"        data-t="9"     onclick="setTab(this)">9º Ano  <span class="tab-badge" id="b-9">0</span></button>
@@ -421,7 +423,7 @@ mark{background:#fffb80;border-radius:2px;padding:0 1px;}
         <div class="field">
           <label>Turma</label>
           <input type="text" id="fTurma" placeholder="Ex: 6ºA, 7ºB, 1ºEM-A">
-          <span class="hint">Digite a série e turma livremente</span>
+          <span class="hint">Ex: EI-1A-M, EI-2B-V, EF-3A-M, 6ºA, 1ºEM-A</span>
         </div>
         <div class="field full">
           <label>Nome completo do aluno</label>
@@ -619,7 +621,13 @@ async function seedData() {
 
 // ── HELPERS ──
 function getTabKey(t) {
-  const s = (t||'').toLowerCase();
+  const s = (t||'').toLowerCase().trim();
+  // Notação oficial: EI-... = Educação Infantil, EF-... = Ensino Fundamental I
+  if (s.startsWith('ei-') || s.startsWith('ei ')) return 'infantil';
+  if (s.startsWith('ef-') || s.startsWith('ef ')) return 'fund1';
+  // Fallback — notações livres
+  if (s.includes('infant')||s.includes('berç')||s.includes('maternal')||s.includes('jardim')||s.includes('pré')) return 'infantil';
+  if ((s.startsWith('1')||s.startsWith('2')||s.startsWith('3')||s.startsWith('4')||s.startsWith('5')) && !s.includes('em') && !s.includes('médio') && !s.includes('medio')) return 'fund1';
   if (s.startsWith('6')) return '6';
   if (s.startsWith('7')) return '7';
   if (s.startsWith('8')) return '8';
@@ -667,7 +675,7 @@ function countTab(t) {
 }
 
 function updateBadges() {
-  ['todos','6','7','8','9','1em'].forEach(k => {
+  ['todos','infantil','fund1','6','7','8','9','1em'].forEach(k => {
     const el = document.getElementById('b-'+k);
     if (el) el.textContent = countTab(k);
   });
